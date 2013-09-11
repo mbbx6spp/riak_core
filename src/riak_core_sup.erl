@@ -63,7 +63,8 @@ init([]) ->
                   ?CHILD(riak_core_capability, worker),
                   ?CHILD(riak_core_gossip, worker),
                   ?CHILD(riak_core_claimant, worker),
-                  ?CHILD(riak_core_stat_sup, supervisor)
+                  ?CHILD(riak_core_stat_sup, supervisor),
+                  ?CHILD(riak_core_conn_services_sup, supervisor)
                  ]),
 
     {ok, {{one_for_one, 10, 10}, Children}}.
