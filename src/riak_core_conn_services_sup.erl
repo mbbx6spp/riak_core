@@ -32,6 +32,10 @@
 %% Supervisor callbacks
 -export([init/1]).
 
+%% Helper macro for declaring children of supervisor
+-define(CHILD(I, Type, Timeout), {I, {I, start_link, []}, permanent, Timeout, Type, [I]}).
+-define(CHILD(I, Type), ?CHILD(I, Type, 5000)).
+
 %% ===================================================================
 %% API functions
 %% ===================================================================
@@ -45,16 +49,11 @@ start_link() ->
 
 %% @private
 init([]) ->
-    {ok, 
-     {{simple_one_for_one, 10, 10},
-      [
-       %% Services Manager (accepts inbound connections)
-       {riak_core_service_mgr, {riak_core_service_mgr, start_link, []},
-        permanent, 5000, worker, [riak_core_service_mgr]},
-       %% Connection Manager (outbound connections)
-       {riak_core_connection_mgr, {riak_core_connection_mgr, start_link, []},
-        permanent, 5000, worker, [riak_core_connection_mgr]},
-       %% TCP Monitor
-       {riak_core_tcp_mon, {riak_core_tcp_mon, start_link, []},
-        permanent, 5000, worker, [riak_core_tcp_mon]}
-      ]}}.
+    Children = lists:flatten(
+                 [
+                  ?CHILD(riak_core_service_mgr, worker),
+                  ?CHILD(riak_core_connection_mgr, worker),
+                  ?CHILD(riak_core_tcp_mon, worker)
+                 ]),
+
+    {ok, {{one_for_one, 10, 10}, Children}}.
